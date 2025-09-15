@@ -1,425 +1,657 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CubeGift — Игровая страница</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-Z5kM8v0WBw7Qei4R9kAxyVn7Q9c+YFtI5usxKiZQ3uEwVgFzK59l4EvDgAfDzOE9wrTe+hTbY6P0qhKMH3C4NQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <style>
-    :root{
-      --bg1: #0f172a;
-      --bg2: #0b1324;
-      --accent: #7c3aed;
-      --accent-2: #06b6d4;
-      --text: #e6eef8;
-      --success: #10b981;
-      --error: #ef4444;
-      --warning: #f59e0b;
-    }
-    html,body{
-      height:100%;margin:0;
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;
-      color:var(--text);
-      background:linear-gradient(180deg,var(--bg1),var(--bg2));
-      display:flex;flex-direction:column;
-    }
-    .main{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;flex-direction:column}
-    h1{margin-bottom:20px;font-size:28px;font-weight:800}
-    .btn{display:inline-flex;align-items:center;gap:10px;padding:14px 22px;border-radius:12px;background:linear-gradient(90deg,var(--accent),#4f46e5);color:#fff;font-weight:700;text-decoration:none;box-shadow:0 8px 20px rgba(99,102,241,0.2);margin:10px;transition:transform .2s}
-    .btn:hover{transform:translateY(-2px)}
-    .bottom-nav{position:fixed;bottom:0;left:0;width:100%;display:flex;justify-content:space-around;background:rgba(0,0,0,0.5);padding:12px 0;backdrop-filter:blur(6px)}
-    .bottom-nav button{background:none;border:none;color:var(--text);font-weight:600;cursor:pointer;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:4px;transition:color .2s}
-    .bottom-nav button:hover{color:var(--accent-2)}
-    .games-list{margin-top:20px;width:100%;max-width:500px}
-    .game-card{background:#1e293b;padding:16px;border-radius:12px;margin-bottom:12px;box-shadow:0 4px 12px rgba(0,0,0,0.4);text-align:left}
-    .game-card h3{margin:0 0 6px 0;font-size:18px}
-    .game-card p{margin:4px 0;font-size:14px;color:#cbd5e1}
-    .lobby-actions{margin-top:10px;display:flex;gap:10px}
-    .lobby-btn{flex:1;padding:8px 12px;border:none;border-radius:8px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;justify-content:center}
-    .join-btn{background:linear-gradient(90deg,#22c55e,#16a34a);color:#fff}
-    .start-btn{background:linear-gradient(90deg,#f59e0b,#d97706);color:#fff}
-    /* Модальное окно */
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:100}
-    .modal-content{background:#1e293b;padding:28px;border-radius:20px;width:90%;max-width:420px;text-align:left;box-shadow:0 12px 40px rgba(0,0,0,0.6);animation:fadeIn .3s ease}
-    .modal-content h2{margin-top:0;margin-bottom:20px;font-size:22px;font-weight:700;text-align:center}
-    .modal-content label{display:block;margin-bottom:6px;margin-top:12px;font-weight:600}
-    .modal-content input{width:100%;padding:12px;border-radius:10px;border:none;margin-bottom:10px;background:#334155;color:var(--text)}
-    .modal-actions{margin-top:20px;display:flex;justify-content:space-between;gap:10px}
-    .modal-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:10px;font-weight:600;text-decoration:none;cursor:pointer;transition:transform .2s}
-    .modal-btn:hover{transform:translateY(-2px)}
-    .close-btn{background:linear-gradient(90deg,#ef4444,#dc2626);color:#fff}
-    .create-btn{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
-    .profile-card{background:#1e293b;padding:20px;border-radius:16px;text-align:center;max-width:400px;width:100%;box-shadow:0 8px 20px rgba(0,0,0,0.5)}
-    .avatar{width:100px;height:100px;border-radius:50%;background:#334155;display:inline-flex;align-items:center;justify-content:center;font-size:40px;color:#fff;margin-bottom:16px}
-    .balance{font-size:18px;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px}
-    .balance button{background:#2563eb;border:none;border-radius:50%;width:28px;height:28px;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-    
-    /* Уведомления */
-    .notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 15px 20px;
-      border-radius: 10px;
-      color: white;
-      font-weight: 600;
-      z-index: 1000;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transform: translateX(100%);
-      transition: transform 0.3s ease;
-    }
-    .notification.show {
-      transform: translateX(0);
-    }
-    .notification.success {
-      background: var(--success);
-    }
-    .notification.error {
-      background: var(--error);
-    }
-    .notification.warning {
-      background: var(--warning);
-    }
-    
-    /* Информация о счете */
-    .invoice-info {
-      background: #334155;
-      padding: 15px;
-      border-radius: 10px;
-      margin-top: 15px;
-      text-align: center;
-    }
-    .invoice-info p {
-      margin: 5px 0;
-      word-break: break-all;
-      font-size: 14px;
-    }
-    .invoice-amount {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--accent-2);
-    }
-    .invoice-address {
-      font-family: monospace;
-      background: rgba(0,0,0,0.2);
-      padding: 8px;
-      border-radius: 6px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CubeGift — Игровая платформа</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --bg1: #0f172a;
+            --bg2: #0b1324;
+            --accent: #7c3aed;
+            --accent-2: #06b6d4;
+            --text: #e6eef8;
+            --tg-theme-bg-color: var(--bg1);
+            --tg-theme-text-color: var(--text);
+            --tg-theme-button-color: var(--accent);
+            --tg-theme-button-text-color: #ffffff;
+        }
+        
+        * {
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+        
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: var(--text);
+            background: linear-gradient(180deg, var(--bg1), var(--bg2));
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            padding: 16px;
+            text-align: center;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 70px;
+        }
+        
+        .section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 22px;
+            border-radius: 12px;
+            background: linear-gradient(90deg, var(--accent), #4f46e5);
+            color: #fff;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.2);
+            margin: 10px 0;
+            transition: transform 0.2s;
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            background: rgba(15, 23, 42, 0.95);
+            padding: 12px 0;
+            backdrop-filter: blur(6px);
+            z-index: 100;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .bottom-nav button {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.2s;
+            opacity: 0.7;
+        }
+        
+        .bottom-nav button.active {
+            opacity: 1;
+            color: var(--accent-2);
+        }
+        
+        .bottom-nav button:hover {
+            color: var(--accent-2);
+        }
+        
+        /* Стили для профиля */
+        .profile-container {
+            text-align: center;
+            padding: 20px 0;
+        }
+        
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--accent), var(--accent-2));
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            color: white;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .username {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        
+        .balance-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .balance {
+            font-size: 20px;
+            font-weight: 600;
+            padding: 10px 20px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+        }
+        
+        .add-balance {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        }
+        
+        .add-balance:hover {
+            transform: scale(1.1);
+        }
+        
+        .inventory {
+            width: 100%;
+            text-align: left;
+            margin-top: 30px;
+        }
+        
+        .inventory h2 {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .inventory-item {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .inventory-item i {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: var(--accent-2);
+        }
+        
+        .inventory-item p {
+            margin: 0;
+            font-size: 14px;
+        }
+        
+        /* Стили для игрового раздела */
+        .games-list {
+            margin-top: 20px;
+            width: 100%;
+        }
+        
+        .game-card {
+            background: #1e293b;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            text-align: left;
+        }
+        
+        .game-card h3 {
+            margin: 0 0 6px 0;
+            font-size: 18px;
+        }
+        
+        .game-card p {
+            margin: 4px 0;
+            font-size: 14px;
+            color: #cbd5e1;
+        }
+        
+        .lobby-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .lobby-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: center;
+        }
+        
+        .join-btn {
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+            color: #fff;
+        }
+        
+        .start-btn {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+            color: #fff;
+        }
+        
+        /* Стили для информации */
+        .info-container {
+            text-align: center;
+            padding: 20px 0;
+        }
+        
+        .info-container p {
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .social-link {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        
+        /* Модальное окно */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: #1e293b;
+            padding: 28px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 420px;
+            text-align: left;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal-content h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .modal-content label {
+            display: block;
+            margin-bottom: 6px;
+            margin-top: 12px;
+            font-weight: 600;
+        }
+        
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            margin-bottom: 10px;
+            background: #334155;
+            color: var(--text);
+        }
+        
+        .modal-actions {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        
+        .modal-btn {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: none;
+        }
+        
+        .modal-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .close-btn {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+            color: #fff;
+        }
+        
+        .create-btn {
+            background: linear-gradient(90deg, var(--accent), var(--accent-2));
+            color: #fff;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Адаптивность для Telegram */
+        @media (max-width: 500px) {
+            .container {
+                padding: 15px;
+                padding-bottom: 70px;
+            }
+            
+            .inventory-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .avatar {
+                width: 100px;
+                height: 100px;
+                font-size: 40px;
+            }
+            
+            .username {
+                font-size: 20px;
+            }
+            
+            .balance {
+                font-size: 18px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="main">
-    <div id="play-section">
-      <h1>Игровой режим</h1>
-      <a href="#" class="btn" id="searchGame"><i class="fa-solid fa-magnifying-glass"></i> Искать игру</a>
-      <a href="#" class="btn" id="createGame"><i class="fa-solid fa-plus"></i> Создать игру</a>
-      <div class="games-list" id="gamesList"></div>
+    <div class="header">
+        <h1>CubeGift</h1>
     </div>
-  </div>
-
-  <!-- Нижняя навигация -->
-  <div class="bottom-nav">
-    <button id="navProfile"><i class="fa-solid fa-user-astronaut fa-lg"></i><span>Профиль</span></button>
-    <button id="navPlay"><i class="fa-solid fa-dice fa-lg"></i><span>Играть</span></button>
-    <button id="navInfo"><i class="fa-solid fa-circle-info fa-lg"></i><span>Информация</span></button>
-  </div>
-
-  <!-- Модальное окно создания игры -->
-  <div class="modal" id="createModal">
-    <div class="modal-content">
-      <h2><i class="fa-solid fa-gamepad"></i> Создание игры</h2>
-      <label for="gameName">Название</label>
-      <input type="text" id="gameName" placeholder="Введите название" />
-      <label for="players">Сколько человек может вступить</label>
-      <input type="number" id="players" min="2" max="10" placeholder="Например: 4" />
-      <label for="bet">Ставка</label>
-      <input type="number" id="bet" min="0" placeholder="Введите ставку" />
-      <div class="modal-actions">
-        <a href="#" class="modal-btn close-btn" id="closeModal"><i class="fa-solid fa-xmark"></i> Закрыть</a>
-        <a href="#" class="modal-btn create-btn" id="submitGame"><i class="fa-solid fa-check"></i> Создать</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Модальное окно пополнения -->
-  <div class="modal" id="depositModal">
-    <div class="modal-content">
-      <h2><i class="fa-brands fa-bitcoin"></i> Пополнение</h2>
-      <p>Выберите способ пополнения:</p>
-      <div class="modal-actions">
-        <a href="https://t.me/CryptoBot" target="_blank" class="modal-btn create-btn"><i class="fa-brands fa-telegram"></i> Crypto Bot</a>
-        <button class="modal-btn create-btn" id="createInvoice"><i class="fa-solid fa-wallet"></i> Создать счет</button>
-      </div>
-      <div id="invoiceDetails" class="invoice-info" style="display: none;">
-        <p>Отправьте точную сумму на адрес:</p>
-        <p class="invoice-amount" id="invoiceAmount"></p>
-        <p class="invoice-address" id="invoiceAddress"></p>
-        <p id="invoiceStatus">Ожидание оплаты...</p>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // Конфигурация API
-    const CRYPTO_BOT_TOKEN = '459540:AAExiuNl2KRqFXGSkteuQ791MLslXScJ0kx';
-    const API_BASE_URL = 'https://pay.crypt.bot/api';
     
-    let balance = 100; // Начальный баланс для демонстрации
-    let currentInvoiceId = null;
-    let checkInvoiceInterval = null;
-
-    // Элементы DOM
-    const createBtn = document.getElementById('createGame');
-    const modal = document.getElementById('createModal');
-    const closeBtn = document.getElementById('closeModal');
-    const submitBtn = document.getElementById('submitGame');
-    const gamesList = document.getElementById('gamesList');
-    const navProfile = document.getElementById('navProfile');
-    const navPlay = document.getElementById('navPlay');
-    const navInfo = document.getElementById('navInfo');
-    const playSection = document.getElementById('play-section');
-    const depositModal = document.getElementById('depositModal');
-    const createInvoiceBtn = document.getElementById('createInvoice');
-    const invoiceDetails = document.getElementById('invoiceDetails');
-    const invoiceAmount = document.getElementById('invoiceAmount');
-    const invoiceAddress = document.getElementById('invoiceAddress');
-    const invoiceStatus = document.getElementById('invoiceStatus');
-
-    // Показать уведомление
-    function showNotification(message, type = 'success') {
-      const notification = document.createElement('div');
-      notification.className = `notification ${type}`;
-      notification.innerHTML = `
-        <i class="fa-solid ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
-        <span>${message}</span>
-      `;
-      
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
-        notification.classList.add('show');
-      }, 100);
-      
-      setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => {
-          document.body.removeChild(notification);
-        }, 300);
-      }, 3000);
-    }
-
-    // Функция для работы с CryptoBot API
-    async function cryptobotRequest(endpoint, method = 'GET', body = null) {
-      try {
-        const options = {
-          method,
-          headers: {
-            'Crypto-Pay-API-Token': CRYPTO_BOT_TOKEN,
-            'Content-Type': 'application/json'
-          }
-        };
+    <div class="container">
+        <div id="play-section" class="section active">
+            <h2>Игровой режим</h2>
+            <a href="#" class="btn" id="searchGame"><i class="fa-solid fa-magnifying-glass"></i> Искать игру</a>
+            <a href="#" class="btn" id="createGame"><i class="fa-solid fa-plus"></i> Создать игру</a>
+            <div class="games-list" id="gamesList"></div>
+        </div>
         
-        if (body && method !== 'GET') {
-          options.body = JSON.stringify(body);
+        <div id="profile-section" class="section">
+            <div class="profile-container">
+                <div class="avatar">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="username">Игрок_123</div>
+                <div class="balance-container">
+                    <div class="balance">Баланс: 0</div>
+                    <div class="add-balance">
+                        <i class="fa-solid fa-plus"></i>
+                    </div>
+                </div>
+                <div class="inventory">
+                    <h2><i class="fa-solid fa-gift"></i> Инвентарь</h2>
+                    <div class="inventory-grid">
+                        <div class="inventory-item">
+                            <i class="fa-solid fa-gift"></i>
+                            <p>Подарок #1</p>
+                        </div>
+                        <div class="inventory-item">
+                            <i class="fa-solid fa-gift"></i>
+                            <p>Подарок #2</p>
+                        </div>
+                        <div class="inventory-item">
+                            <i class="fa-solid fa-gift"></i>
+                            <p>Подарок #3</p>
+                        </div>
+                        <div class="inventory-item">
+                            <i class="fa-solid fa-gift"></i>
+                            <p>Подарок #4</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="info-section" class="section">
+            <div class="info-container">
+                <h2><i class="fa-solid fa-circle-info"></i> О приложении</h2>
+                <p>CubeGift — это игровая платформа, где вы можете участвовать в розыгрышах и получать ценные призы.</p>
+                <p>Создавайте свои игры, приглашайте друзей и выигрывайте подарки!</p>
+                <a href="https://t.me/CubeGift" class="social-link" target="_blank">
+                    <i class="fab fa-telegram"></i> Официальный канал @CubeGifts
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button id="navProfile" class="active">
+            <i class="fa-solid fa-user-astronaut fa-lg"></i>
+            <span>Профиль</span>
+        </button>
+        <button id="navPlay">
+            <i class="fa-solid fa-dice fa-lg"></i>
+            <span>Играть</span>
+        </button>
+        <button id="navInfo">
+            <i class="fa-solid fa-circle-info fa-lg"></i>
+            <span>Информация</span>
+        </button>
+    </div>
+
+    <div class="modal" id="createModal">
+        <div class="modal-content">
+            <h2><i class="fa-solid fa-gamepad"></i> Создание игры</h2>
+            <label for="gameName">Название</label>
+            <input type="text" id="gameName" placeholder="Введите название" />
+            <label for="players">Сколько человек может вступить</label>
+            <input type="number" id="players" min="2" max="10" placeholder="Например: 4" />
+            <label for="bet">Ставка</label>
+            <input type="number" id="bet" min="0" placeholder="Введите ставку" />
+            <div class="modal-actions">
+                <button class="modal-btn close-btn" id="closeModal"><i class="fa-solid fa-xmark"></i> Закрыть</button>
+                <button class="modal-btn create-btn" id="submitGame"><i class="fa-solid fa-check"></i> Создать</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация Telegram Web App
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.enableClosingConfirmation();
+        
+        // Элементы DOM
+        const navProfile = document.getElementById('navProfile');
+        const navPlay = document.getElementById('navPlay');
+        const navInfo = document.getElementById('navInfo');
+        const playSection = document.getElementById('play-section');
+        const profileSection = document.getElementById('profile-section');
+        const infoSection = document.getElementById('info-section');
+        const sections = document.querySelectorAll('.section');
+        const navButtons = document.querySelectorAll('.bottom-nav button');
+        
+        const createBtn = document.getElementById('createGame');
+        const modal = document.getElementById('createModal');
+        const closeBtn = document.getElementById('closeModal');
+        const submitBtn = document.getElementById('submitGame');
+        const gamesList = document.getElementById('gamesList');
+        
+        // Навигация
+        function showSection(sectionId) {
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+            
+            navButtons.forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (sectionId === 'play-section') {
+                navPlay.classList.add('active');
+            } else if (sectionId === 'profile-section') {
+                navProfile.classList.add('active');
+            } else if (sectionId === 'info-section') {
+                navInfo.classList.add('active');
+            }
         }
         
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
-        const data = await response.json();
-        
-        if (!data.ok) {
-          throw new Error(data.error || 'Ошибка CryptoBot API');
-        }
-        
-        return data.result;
-      } catch (error) {
-        console.error('Ошибка CryptoBot API:', error);
-        showNotification('Ошибка при работе с платежной системой', 'error');
-        throw error;
-      }
-    }
-
-    // Создание инвойса для пополнения
-    async function createInvoice(amount = 10) {
-      try {
-        showNotification('Создание счета...', 'warning');
-        
-        const invoice = await cryptobotRequest('/createInvoice', 'POST', {
-          asset: 'USDT',
-          amount: amount.toString(),
-          description: `Пополнение баланса на CubeGift`,
-          paid_btn_name: 'open',
-          paid_btn_url: window.location.href,
-          payload: JSON.stringify({ userId: 'demo-user', type: 'deposit' })
+        navProfile.addEventListener('click', () => {
+            showSection('profile-section');
         });
         
-        currentInvoiceId = invoice.invoice_id;
+        navPlay.addEventListener('click', () => {
+            showSection('play-section');
+        });
         
-        // Показываем детали инвойса
-        invoiceAmount.textContent = `${amount} USDT`;
-        invoiceAddress.textContent = invoice.pay_url;
-        invoiceDetails.style.display = 'block';
+        navInfo.addEventListener('click', () => {
+            showSection('info-section');
+        });
         
-        // Начинаем проверку статуса инвойса
-        clearInterval(checkInvoiceInterval);
-        checkInvoiceInterval = setInterval(() => {
-          checkInvoiceStatus(currentInvoiceId);
-        }, 5000);
+        // Модальное окно
+        createBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            modal.style.display = 'flex';
+        });
         
-        showNotification('Счет создан. Оплатите в течение 15 минут.', 'success');
+        closeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            modal.style.display = 'none';
+        });
         
-      } catch (error) {
-        console.error('Ошибка создания счета:', error);
-        showNotification('Не удалось создать счет для оплаты', 'error');
-      }
-    }
-
-    // Проверка статуса инвойса
-    async function checkInvoiceStatus(invoiceId) {
-      try {
-        const invoices = await cryptobotRequest('/getInvoices?invoice_ids=' + invoiceId);
-        
-        if (invoices && invoices.length > 0) {
-          const invoice = invoices[0];
-          
-          if (invoice.status === 'paid') {
-            // Инвойс оплачен
-            clearInterval(checkInvoiceInterval);
-            invoiceStatus.innerHTML = '<span style="color: #10b981;">Оплачено! Баланс пополнен.</span>';
+        submitBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('gameName').value.trim();
+            const players = document.getElementById('players').value;
+            const bet = document.getElementById('bet').value;
             
-            // Обновляем баланс
-            balance += parseFloat(invoice.amount);
-            updateBalanceDisplay();
-            
-            showNotification(`Баланс пополнен на ${invoice.amount} USDT!`, 'success');
-            
-          } else if (invoice.status === 'expired') {
-            // Инвойс просрочен
-            clearInterval(checkInvoiceInterval);
-            invoiceStatus.innerHTML = '<span style="color: #ef4444;">Счет просрочен</span>';
-            showNotification('Время оплаты истекло', 'error');
-          }
-        }
-      } catch (error) {
-        console.error('Ошибка проверки статуса счета:', error);
-      }
-    }
-
-    // Обновление отображения баланса
-    function updateBalanceDisplay() {
-      const balanceElement = document.getElementById('balanceAmount');
-      if (balanceElement) {
-        balanceElement.textContent = balance.toFixed(2);
-      }
-    }
-
-    // Обработчики событий
-    createInvoiceBtn.addEventListener('click', () => {
-      createInvoice(10); // Создаем инвойс на 10 USDT
-    });
-
-    navProfile.addEventListener('click',()=>{
-      playSection.innerHTML = `
-        <div class='profile-card'>
-          <div class='avatar'><i class="fa-solid fa-user"></i></div>
-          <h2>Игрок CubeGift</h2>
-          <div class='balance'>Баланс: <span id='balanceAmount'>${balance.toFixed(2)}</span> USDT <button id='addFunds'>+</button></div>
-        </div>`;
-
-      document.getElementById('addFunds').addEventListener('click',()=>{
-        depositModal.style.display='flex';
-        // Сбрасываем состояние инвойса при открытии
-        invoiceDetails.style.display = 'none';
-        if (checkInvoiceInterval) {
-          clearInterval(checkInvoiceInterval);
-        }
-      });
-    });
-
-    navPlay.addEventListener('click',()=>{
-      playSection.innerHTML = `<h1>Игровой режим</h1>
-        <a href='#' class='btn' id='searchGame'><i class='fa-solid fa-magnifying-glass'></i> Искать игру</a>
-        <a href='#' class='btn' id='createGame'><i class='fa-solid fa-plus'></i> Создать игру</a>
-        <div class='games-list' id='gamesList'></div>`;
-      rebindGameButtons();
-    });
-
-    navInfo.addEventListener('click',()=>{
-      playSection.innerHTML = `<h1><i class='fa-solid fa-circle-info'></i> Информация</h1>
-        <p>CubeGift — игровая платформа с поддержкой криптоплатежей через CryptoBot.</p>
-        <p>Для пополнения баланса используйте USDT (TRC-20).</p>`;
-    });
-
-    createBtn.addEventListener('click', (e)=>{
-      e.preventDefault();
-      modal.style.display = 'flex';
-    });
-
-    closeBtn.addEventListener('click', (e)=>{
-      e.preventDefault();
-      modal.style.display = 'none';
-    });
-
-    submitBtn.addEventListener('click', (e)=>{
-      e.preventDefault();
-      const name = document.getElementById('gameName').value.trim();
-      const players = document.getElementById('players').value;
-      const bet = document.getElementById('bet').value;
-
-      if(name && players && bet !== ""){
-        // Проверяем достаточно ли средств для создания игры
-        if (balance < parseFloat(bet)) {
-          showNotification('Недостаточно средств на балансе', 'error');
-          return;
-        }
+            if (name && players && bet !== "") {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                card.innerHTML = `<h3><i class='fa-solid fa-dice'></i> ${name}</h3>
+                                  <p><i class='fa-solid fa-users'></i> Игроков: ${players}</p>
+                                  <p><i class='fa-solid fa-coins'></i> Ставка: ${bet}</p>
+                                  <div class='lobby-actions'>
+                                    <button class='lobby-btn join-btn'><i class='fa-solid fa-door-open'></i> Вступить</button>
+                                    <button class='lobby-btn start-btn'><i class='fa-solid fa-play'></i> Начать</button>
+                                  </div>`;
+                gamesList.appendChild(card);
+                modal.style.display = 'none';
+                document.getElementById('gameName').value = '';
+                document.getElementById('players').value = '';
+                document.getElementById('bet').value = '';
+                
+                // Показываем уведомление в Telegram
+                tg.showPopup({
+                    title: "Игра создана!",
+                    message: `Игра "${name}" успешно создана.`,
+                    buttons: [{type: "ok"}]
+                });
+            } else {
+                tg.showPopup({
+                    title: "Ошибка",
+                    message: "Заполните все поля",
+                    buttons: [{type: "ok"}]
+                });
+            }
+        });
         
-        const card = document.createElement('div');
-        card.className = 'game-card';
-        card.innerHTML = `<h3><i class='fa-solid fa-dice'></i> ${name}</h3>
-                          <p><i class='fa-solid fa-users'></i> Игроков: ${players}</p>
-                          <p><i class='fa-solid fa-coins'></i> Ставка: ${bet} USDT</p>
-                          <div class='lobby-actions'>
-                            <button class='lobby-btn join-btn'><i class='fa-solid fa-door-open'></i> Вступить</button>
-                            <button class='lobby-btn start-btn'><i class='fa-solid fa-play'></i> Начать</button>
-                          </div>`;
-        gamesList.appendChild(card);
-        modal.style.display = 'none';
-        document.getElementById('gameName').value = '';
-        document.getElementById('players').value = '';
-        document.getElementById('bet').value = '';
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
         
-        showNotification('Игра создана успешно!', 'success');
-      } else {
-        showNotification('Заполните все поля', 'error');
-      }
-    });
-
-    window.addEventListener('click',(e)=>{
-      if(e.target === modal){modal.style.display='none'}
-      if(e.target === depositModal){
-        depositModal.style.display='none';
-        if (checkInvoiceInterval) {
-          clearInterval(checkInvoiceInterval);
+        // Обработка кнопки пополнения баланса
+        document.querySelector('.add-balance').addEventListener('click', function() {
+            tg.showPopup({
+                title: "Пополнение баланса",
+                message: "Выберите способ пополнения:",
+                buttons: [
+                    {type: "default", text: "Звезды"},
+                    {type: "default", text: "NFT"},
+                    {type: "cancel"}
+                ]
+            });
+        });
+        
+        // Имитация данных пользователя из Telegram
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            const user = tg.initDataUnsafe.user;
+            document.querySelector('.username').textContent = user.first_name || user.username || 'Игрок';
+            
+            if (user.photo_url) {
+                document.querySelector('.avatar').innerHTML = `<img src="${user.photo_url}" style="width:100%;height:100%;border-radius:50%;">`;
+            }
         }
-      }
-    });
-
-    function rebindGameButtons(){
-      document.getElementById('createGame').addEventListener('click',(e)=>{
-        e.preventDefault();
-        modal.style.display='flex';
-      });
-    }
-
-    // Инициализация
-    updateBalanceDisplay();
-    showNotification('Добро пожаловать в CubeGift!', 'success');
-  </script>
+    </script>
 </body>
 </html>
