@@ -15,6 +15,9 @@
       --accent: #7c3aed;
       --accent-2: #06b6d4;
       --text: #e6eef8;
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
     }
     html,body{
       height:100%;margin:0;
@@ -50,6 +53,65 @@
     .close-btn{background:linear-gradient(90deg,#ef4444,#dc2626);color:#fff}
     .create-btn{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
     @keyframes fadeIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+    .profile-card{background:#1e293b;padding:20px;border-radius:16px;text-align:center;max-width:400px;width:100%;box-shadow:0 8px 20px rgba(0,0,0,0.5)}
+    .avatar{width:100px;height:100px;border-radius:50%;background:#334155;display:inline-flex;align-items:center;justify-content:center;font-size:40px;color:#fff;margin-bottom:16px}
+    .balance{font-size:18px;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+    .balance button{background:#2563eb;border:none;border-radius:50%;width:28px;height:28px;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    
+    /* Уведомления */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      border-radius: 10px;
+      color: white;
+      font-weight: 600;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+    .notification.show {
+      transform: translateX(0);
+    }
+    .notification.success {
+      background: var(--success);
+    }
+    .notification.error {
+      background: var(--error);
+    }
+    .notification.warning {
+      background: var(--warning);
+    }
+    
+    /* Информация о счете */
+    .invoice-info {
+      background: #334155;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 15px;
+      text-align: center;
+    }
+    .invoice-info p {
+      margin: 5px 0;
+      word-break: break-all;
+      font-size: 14px;
+    }
+    .invoice-amount {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent-2);
+    }
+    .invoice-address {
+      font-family: monospace;
+      background: rgba(0,0,0,0.2);
+      padding: 8px;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
@@ -69,7 +131,7 @@
     <button id="navInfo"><i class="fa-solid fa-circle-info fa-lg"></i><span>Информация</span></button>
   </div>
 
-  <!-- Модальное окно -->
+  <!-- Модальное окно создания игры -->
   <div class="modal" id="createModal">
     <div class="modal-content">
       <h2><i class="fa-solid fa-gamepad"></i> Создание игры</h2>
@@ -86,21 +148,198 @@
     </div>
   </div>
 
+  <!-- Модальное окно пополнения -->
+  <div class="modal" id="depositModal">
+    <div class="modal-content">
+      <h2><i class="fa-brands fa-bitcoin"></i> Пополнение</h2>
+      <p>Выберите способ пополнения:</p>
+      <div class="modal-actions">
+        <a href="https://t.me/CryptoBot" target="_blank" class="modal-btn create-btn"><i class="fa-brands fa-telegram"></i> Crypto Bot</a>
+        <button class="modal-btn create-btn" id="createInvoice"><i class="fa-solid fa-wallet"></i> Создать счет</button>
+      </div>
+      <div id="invoiceDetails" class="invoice-info" style="display: none;">
+        <p>Отправьте точную сумму на адрес:</p>
+        <p class="invoice-amount" id="invoiceAmount"></p>
+        <p class="invoice-address" id="invoiceAddress"></p>
+        <p id="invoiceStatus">Ожидание оплаты...</p>
+      </div>
+    </div>
+  </div>
+
   <script>
+    // Конфигурация API
+    const CRYPTO_BOT_TOKEN = '459540:AAExiuNl2KRqFXGSkteuQ791MLslXScJ0kx';
+    const API_BASE_URL = 'https://pay.crypt.bot/api';
+    
+    let balance = 100; // Начальный баланс для демонстрации
+    let currentInvoiceId = null;
+    let checkInvoiceInterval = null;
+
+    // Элементы DOM
     const createBtn = document.getElementById('createGame');
     const modal = document.getElementById('createModal');
     const closeBtn = document.getElementById('closeModal');
     const submitBtn = document.getElementById('submitGame');
     const gamesList = document.getElementById('gamesList');
-
-    // Навигация по разделам (одна страница)
     const navProfile = document.getElementById('navProfile');
     const navPlay = document.getElementById('navPlay');
     const navInfo = document.getElementById('navInfo');
     const playSection = document.getElementById('play-section');
+    const depositModal = document.getElementById('depositModal');
+    const createInvoiceBtn = document.getElementById('createInvoice');
+    const invoiceDetails = document.getElementById('invoiceDetails');
+    const invoiceAmount = document.getElementById('invoiceAmount');
+    const invoiceAddress = document.getElementById('invoiceAddress');
+    const invoiceStatus = document.getElementById('invoiceStatus');
+
+    // Показать уведомление
+    function showNotification(message, type = 'success') {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.innerHTML = `
+        <i class="fa-solid ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+        <span>${message}</span>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.classList.add('show');
+      }, 100);
+      
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 300);
+      }, 3000);
+    }
+
+    // Функция для работы с CryptoBot API
+    async function cryptobotRequest(endpoint, method = 'GET', body = null) {
+      try {
+        const options = {
+          method,
+          headers: {
+            'Crypto-Pay-API-Token': CRYPTO_BOT_TOKEN,
+            'Content-Type': 'application/json'
+          }
+        };
+        
+        if (body && method !== 'GET') {
+          options.body = JSON.stringify(body);
+        }
+        
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+        const data = await response.json();
+        
+        if (!data.ok) {
+          throw new Error(data.error || 'Ошибка CryptoBot API');
+        }
+        
+        return data.result;
+      } catch (error) {
+        console.error('Ошибка CryptoBot API:', error);
+        showNotification('Ошибка при работе с платежной системой', 'error');
+        throw error;
+      }
+    }
+
+    // Создание инвойса для пополнения
+    async function createInvoice(amount = 10) {
+      try {
+        showNotification('Создание счета...', 'warning');
+        
+        const invoice = await cryptobotRequest('/createInvoice', 'POST', {
+          asset: 'USDT',
+          amount: amount.toString(),
+          description: `Пополнение баланса на CubeGift`,
+          paid_btn_name: 'open',
+          paid_btn_url: window.location.href,
+          payload: JSON.stringify({ userId: 'demo-user', type: 'deposit' })
+        });
+        
+        currentInvoiceId = invoice.invoice_id;
+        
+        // Показываем детали инвойса
+        invoiceAmount.textContent = `${amount} USDT`;
+        invoiceAddress.textContent = invoice.pay_url;
+        invoiceDetails.style.display = 'block';
+        
+        // Начинаем проверку статуса инвойса
+        clearInterval(checkInvoiceInterval);
+        checkInvoiceInterval = setInterval(() => {
+          checkInvoiceStatus(currentInvoiceId);
+        }, 5000);
+        
+        showNotification('Счет создан. Оплатите в течение 15 минут.', 'success');
+        
+      } catch (error) {
+        console.error('Ошибка создания счета:', error);
+        showNotification('Не удалось создать счет для оплаты', 'error');
+      }
+    }
+
+    // Проверка статуса инвойса
+    async function checkInvoiceStatus(invoiceId) {
+      try {
+        const invoices = await cryptobotRequest('/getInvoices?invoice_ids=' + invoiceId);
+        
+        if (invoices && invoices.length > 0) {
+          const invoice = invoices[0];
+          
+          if (invoice.status === 'paid') {
+            // Инвойс оплачен
+            clearInterval(checkInvoiceInterval);
+            invoiceStatus.innerHTML = '<span style="color: #10b981;">Оплачено! Баланс пополнен.</span>';
+            
+            // Обновляем баланс
+            balance += parseFloat(invoice.amount);
+            updateBalanceDisplay();
+            
+            showNotification(`Баланс пополнен на ${invoice.amount} USDT!`, 'success');
+            
+          } else if (invoice.status === 'expired') {
+            // Инвойс просрочен
+            clearInterval(checkInvoiceInterval);
+            invoiceStatus.innerHTML = '<span style="color: #ef4444;">Счет просрочен</span>';
+            showNotification('Время оплаты истекло', 'error');
+          }
+        }
+      } catch (error) {
+        console.error('Ошибка проверки статуса счета:', error);
+      }
+    }
+
+    // Обновление отображения баланса
+    function updateBalanceDisplay() {
+      const balanceElement = document.getElementById('balanceAmount');
+      if (balanceElement) {
+        balanceElement.textContent = balance.toFixed(2);
+      }
+    }
+
+    // Обработчики событий
+    createInvoiceBtn.addEventListener('click', () => {
+      createInvoice(10); // Создаем инвойс на 10 USDT
+    });
 
     navProfile.addEventListener('click',()=>{
-      playSection.innerHTML = `<h1><i class='fa-solid fa-user-astronaut'></i> Профиль</h1><p>Раздел профиля пользователя.</p>`;
+      playSection.innerHTML = `
+        <div class='profile-card'>
+          <div class='avatar'><i class="fa-solid fa-user"></i></div>
+          <h2>Игрок CubeGift</h2>
+          <div class='balance'>Баланс: <span id='balanceAmount'>${balance.toFixed(2)}</span> USDT <button id='addFunds'>+</button></div>
+        </div>`;
+
+      document.getElementById('addFunds').addEventListener('click',()=>{
+        depositModal.style.display='flex';
+        // Сбрасываем состояние инвойса при открытии
+        invoiceDetails.style.display = 'none';
+        if (checkInvoiceInterval) {
+          clearInterval(checkInvoiceInterval);
+        }
+      });
     });
 
     navPlay.addEventListener('click',()=>{
@@ -112,7 +351,9 @@
     });
 
     navInfo.addEventListener('click',()=>{
-      playSection.innerHTML = `<h1><i class='fa-solid fa-circle-info'></i> Информация</h1><p>CubeGift — лучшая игровая платформа.</p>`;
+      playSection.innerHTML = `<h1><i class='fa-solid fa-circle-info'></i> Информация</h1>
+        <p>CubeGift — игровая платформа с поддержкой криптоплатежей через CryptoBot.</p>
+        <p>Для пополнения баланса используйте USDT (TRC-20).</p>`;
     });
 
     createBtn.addEventListener('click', (e)=>{
@@ -132,11 +373,17 @@
       const bet = document.getElementById('bet').value;
 
       if(name && players && bet !== ""){
+        // Проверяем достаточно ли средств для создания игры
+        if (balance < parseFloat(bet)) {
+          showNotification('Недостаточно средств на балансе', 'error');
+          return;
+        }
+        
         const card = document.createElement('div');
         card.className = 'game-card';
         card.innerHTML = `<h3><i class='fa-solid fa-dice'></i> ${name}</h3>
                           <p><i class='fa-solid fa-users'></i> Игроков: ${players}</p>
-                          <p><i class='fa-solid fa-coins'></i> Ставка: ${bet}</p>
+                          <p><i class='fa-solid fa-coins'></i> Ставка: ${bet} USDT</p>
                           <div class='lobby-actions'>
                             <button class='lobby-btn join-btn'><i class='fa-solid fa-door-open'></i> Вступить</button>
                             <button class='lobby-btn start-btn'><i class='fa-solid fa-play'></i> Начать</button>
@@ -146,11 +393,21 @@
         document.getElementById('gameName').value = '';
         document.getElementById('players').value = '';
         document.getElementById('bet').value = '';
+        
+        showNotification('Игра создана успешно!', 'success');
+      } else {
+        showNotification('Заполните все поля', 'error');
       }
     });
 
     window.addEventListener('click',(e)=>{
       if(e.target === modal){modal.style.display='none'}
+      if(e.target === depositModal){
+        depositModal.style.display='none';
+        if (checkInvoiceInterval) {
+          clearInterval(checkInvoiceInterval);
+        }
+      }
     });
 
     function rebindGameButtons(){
@@ -159,6 +416,10 @@
         modal.style.display='flex';
       });
     }
+
+    // Инициализация
+    updateBalanceDisplay();
+    showNotification('Добро пожаловать в CubeGift!', 'success');
   </script>
 </body>
 </html>
