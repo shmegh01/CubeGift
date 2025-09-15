@@ -164,12 +164,11 @@
         .username {
             font-size: 24px;
             font-weight: 700;
-            margin-bottom: 20px;
+            margin-bottom: 5px;
         }
         
         .user-handle {
             color: #94a3b8;
-            margin-top: -15px;
             margin-bottom: 20px;
             font-size: 16px;
         }
@@ -621,6 +620,7 @@
                 // Устанавливаем username
                 if (user.username) {
                     userHandle.textContent = '@' + user.username;
+                    userHandle.style.display = 'block';
                 } else {
                     userHandle.style.display = 'none';
                 }
@@ -632,17 +632,56 @@
                     img.src = user.photo_url;
                     img.alt = 'Аватар пользователя';
                     userAvatar.appendChild(img);
+                } else {
+                    userAvatar.innerHTML = '<i class="fa-solid fa-user"></i>';
                 }
+                
+                // Отправляем данные на сервер для сохранения
+                sendUserDataToServer(user);
             } else {
-                // Заглушка, если данные недоступны
+                // Если данные недоступны, показываем тестовые данные
                 userName.textContent = 'Тестовый пользователь';
                 userHandle.textContent = '@testuser';
+                userHandle.style.display = 'block';
             }
+        }
+        
+        // Функция для отправки данных пользователя на сервер
+        function sendUserDataToServer(user) {
+            // Здесь должен быть код для отправки данных на ваш сервер
+            // Например, с помощью fetch API
+            console.log('Данные пользователя для отправки на сервер:', user);
+            
+            // Пример отправки данных:
+            /*
+            fetch('https://your-server.com/api/save-user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    username: user.username,
+                    photo_url: user.photo_url,
+                    language_code: user.language_code,
+                    is_premium: user.is_premium || false,
+                    allows_write_to_pm: user.allows_write_to_pm || false
+                })
+            })
+            .then(response => response.json())
+            .then(data => console.log('Пользователь сохранен:', data))
+            .catch(error => console.error('Ошибка:', error));
+            */
         }
         
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
             loadUserData();
+            
+            // Показываем раздел профиля по умолчанию
+            showSection('profile-section');
         });
     </script>
 </body>
