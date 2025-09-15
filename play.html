@@ -152,12 +152,26 @@
             font-size: 50px;
             color: white;
             border: 4px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+        
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
         
         .username {
             font-size: 24px;
             font-weight: 700;
             margin-bottom: 20px;
+        }
+        
+        .user-handle {
+            color: #94a3b8;
+            margin-top: -15px;
+            margin-bottom: 20px;
+            font-size: 16px;
         }
         
         .balance-container {
@@ -192,43 +206,6 @@
         
         .add-balance:hover {
             transform: scale(1.1);
-        }
-        
-        .inventory {
-            width: 100%;
-            text-align: left;
-            margin-top: 30px;
-        }
-        
-        .inventory h2 {
-            text-align: center;
-            margin-bottom: 15px;
-            font-size: 20px;
-        }
-        
-        .inventory-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-        
-        .inventory-item {
-            background: #1e293b;
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        
-        .inventory-item i {
-            font-size: 24px;
-            margin-bottom: 8px;
-            color: var(--accent-2);
-        }
-        
-        .inventory-item p {
-            margin: 0;
-            font-size: 14px;
         }
         
         /* Стили для игрового раздела */
@@ -410,10 +387,6 @@
                 padding-bottom: 70px;
             }
             
-            .inventory-grid {
-                grid-template-columns: 1fr;
-            }
-            
             .avatar {
                 width: 100px;
                 height: 100px;
@@ -445,35 +418,15 @@
         
         <div id="profile-section" class="section">
             <div class="profile-container">
-                <div class="avatar">
+                <div class="avatar" id="userAvatar">
                     <i class="fa-solid fa-user"></i>
                 </div>
-                <div class="username">Игрок_123</div>
+                <div class="username" id="userName">Загрузка...</div>
+                <div class="user-handle" id="userHandle">@username</div>
                 <div class="balance-container">
                     <div class="balance">Баланс: 0</div>
                     <div class="add-balance">
                         <i class="fa-solid fa-plus"></i>
-                    </div>
-                </div>
-                <div class="inventory">
-                    <h2><i class="fa-solid fa-gift"></i> Инвентарь</h2>
-                    <div class="inventory-grid">
-                        <div class="inventory-item">
-                            <i class="fa-solid fa-gift"></i>
-                            <p>Подарок #1</p>
-                        </div>
-                        <div class="inventory-item">
-                            <i class="fa-solid fa-gift"></i>
-                            <p>Подарок #2</p>
-                        </div>
-                        <div class="inventory-item">
-                            <i class="fa-solid fa-gift"></i>
-                            <p>Подарок #3</p>
-                        </div>
-                        <div class="inventory-item">
-                            <i class="fa-solid fa-gift"></i>
-                            <p>Подарок #4</p>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -485,7 +438,7 @@
                 <p>CubeGift — это игровая платформа, где вы можете участвовать в розыгрышах и получать ценные призы.</p>
                 <p>Создавайте свои игры, приглашайте друзей и выигрывайте подарки!</p>
                 <a href="https://t.me/CubeGift" class="social-link" target="_blank">
-                    <i class="fab fa-telegram"></i> Официальный канал @CubeGifts
+                    <i class="fab fa-telegram"></i> Официальный канал @CubeGift
                 </a>
             </div>
         </div>
@@ -543,6 +496,11 @@
         const closeBtn = document.getElementById('closeModal');
         const submitBtn = document.getElementById('submitGame');
         const gamesList = document.getElementById('gamesList');
+        
+        // Элементы профиля
+        const userAvatar = document.getElementById('userAvatar');
+        const userName = document.getElementById('userName');
+        const userHandle = document.getElementById('userHandle');
         
         // Навигация
         function showSection(sectionId) {
@@ -636,22 +594,56 @@
                 title: "Пополнение баланса",
                 message: "Выберите способ пополнения:",
                 buttons: [
-                    {type: "default", text: "Звезды"},
-                    {type: "default", text: "NFT"},
+                    {type: "default", text: "Картой"},
+                    {type: "default", text: "Криптовалютой"},
                     {type: "cancel"}
                 ]
             });
         });
         
-        // Имитация данных пользователя из Telegram
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            const user = tg.initDataUnsafe.user;
-            document.querySelector('.username').textContent = user.first_name || user.username || 'Игрок';
-            
-            if (user.photo_url) {
-                document.querySelector('.avatar').innerHTML = `<img src="${user.photo_url}" style="width:100%;height:100%;border-radius:50%;">`;
+        // Загрузка данных пользователя из Telegram
+        function loadUserData() {
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                const user = tg.initDataUnsafe.user;
+                
+                // Устанавливаем имя пользователя
+                if (user.first_name) {
+                    userName.textContent = user.first_name;
+                    if (user.last_name) {
+                        userName.textContent += ' ' + user.last_name;
+                    }
+                } else if (user.username) {
+                    userName.textContent = user.username;
+                } else {
+                    userName.textContent = 'Пользователь';
+                }
+                
+                // Устанавливаем username
+                if (user.username) {
+                    userHandle.textContent = '@' + user.username;
+                } else {
+                    userHandle.style.display = 'none';
+                }
+                
+                // Устанавливаем аватар
+                if (user.photo_url) {
+                    userAvatar.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = user.photo_url;
+                    img.alt = 'Аватар пользователя';
+                    userAvatar.appendChild(img);
+                }
+            } else {
+                // Заглушка, если данные недоступны
+                userName.textContent = 'Тестовый пользователь';
+                userHandle.textContent = '@testuser';
             }
         }
+        
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserData();
+        });
     </script>
 </body>
 </html>
