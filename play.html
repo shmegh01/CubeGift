@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CubeGift — Игровая страница</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-Z5kM8v0WBw7Qei4R9kAxyVn7Q9c+YFtI5usxKiZQ3uEwVgFzK59l4EvDgAfDzOE9wrTe+hTbY6P0qhKMH3C4NQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <style>
+    :root{
+      --bg1: #0f172a;
+      --bg2: #0b1324;
+      --accent: #7c3aed;
+      --accent-2: #06b6d4;
+      --text: #e6eef8;
+    }
+    html,body{
+      height:100%;margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;
+      color:var(--text);
+      background:linear-gradient(180deg,var(--bg1),var(--bg2));
+      display:flex;flex-direction:column;
+    }
+    .main{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;flex-direction:column}
+    h1{margin-bottom:20px;font-size:28px;font-weight:800}
+    .btn{display:inline-flex;align-items:center;gap:10px;padding:14px 22px;border-radius:12px;background:linear-gradient(90deg,var(--accent),#4f46e5);color:#fff;font-weight:700;text-decoration:none;box-shadow:0 8px 20px rgba(99,102,241,0.2);margin:10px;transition:transform .2s}
+    .btn:hover{transform:translateY(-2px)}
+    .bottom-nav{position:fixed;bottom:0;left:0;width:100%;display:flex;justify-content:space-around;background:rgba(0,0,0,0.5);padding:12px 0;backdrop-filter:blur(6px)}
+    .bottom-nav button{background:none;border:none;color:var(--text);font-weight:600;cursor:pointer;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:4px;transition:color .2s}
+    .bottom-nav button:hover{color:var(--accent-2)}
+    .games-list{margin-top:20px;width:100%;max-width:500px}
+    .game-card{background:#1e293b;padding:16px;border-radius:12px;margin-bottom:12px;box-shadow:0 4px 12px rgba(0,0,0,0.4);text-align:left}
+    .game-card h3{margin:0 0 6px 0;font-size:18px}
+    .game-card p{margin:4px 0;font-size:14px;color:#cbd5e1}
+    .lobby-actions{margin-top:10px;display:flex;gap:10px}
+    .lobby-btn{flex:1;padding:8px 12px;border:none;border-radius:8px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+    .join-btn{background:linear-gradient(90deg,#22c55e,#16a34a);color:#fff}
+    .start-btn{background:linear-gradient(90deg,#f59e0b,#d97706);color:#fff}
+    /* Модальное окно */
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:100}
+    .modal-content{background:#1e293b;padding:28px;border-radius:20px;width:90%;max-width:420px;text-align:left;box-shadow:0 12px 40px rgba(0,0,0,0.6);animation:fadeIn .3s ease}
+    .modal-content h2{margin-top:0;margin-bottom:20px;font-size:22px;font-weight:700;text-align:center}
+    .modal-content label{display:block;margin-bottom:6px;margin-top:12px;font-weight:600}
+    .modal-content input{width:100%;padding:12px;border-radius:10px;border:none;margin-bottom:10px;background:#334155;color:var(--text)}
+    .modal-actions{margin-top:20px;display:flex;justify-content:space-between;gap:10px}
+    .modal-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:10px;font-weight:600;text-decoration:none;cursor:pointer;transition:transform .2s}
+    .modal-btn:hover{transform:translateY(-2px)}
+    .close-btn{background:linear-gradient(90deg,#ef4444,#dc2626);color:#fff}
+    .create-btn{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+</head>
+<body>
+  <div class="main">
+    <div id="play-section">
+      <h1>Игровой режим</h1>
+      <a href="#" class="btn" id="searchGame"><i class="fa-solid fa-magnifying-glass"></i> Искать игру</a>
+      <a href="#" class="btn" id="createGame"><i class="fa-solid fa-plus"></i> Создать игру</a>
+      <div class="games-list" id="gamesList"></div>
+    </div>
+  </div>
+
+  <!-- Нижняя навигация -->
+  <div class="bottom-nav">
+    <button id="navProfile"><i class="fa-solid fa-user-astronaut fa-lg"></i><span>Профиль</span></button>
+    <button id="navPlay"><i class="fa-solid fa-dice fa-lg"></i><span>Играть</span></button>
+    <button id="navInfo"><i class="fa-solid fa-circle-info fa-lg"></i><span>Информация</span></button>
+  </div>
+
+  <!-- Модальное окно -->
+  <div class="modal" id="createModal">
+    <div class="modal-content">
+      <h2><i class="fa-solid fa-gamepad"></i> Создание игры</h2>
+      <label for="gameName">Название</label>
+      <input type="text" id="gameName" placeholder="Введите название" />
+      <label for="players">Сколько человек может вступить</label>
+      <input type="number" id="players" min="2" max="10" placeholder="Например: 4" />
+      <label for="bet">Ставка</label>
+      <input type="number" id="bet" min="0" placeholder="Введите ставку" />
+      <div class="modal-actions">
+        <a href="#" class="modal-btn close-btn" id="closeModal"><i class="fa-solid fa-xmark"></i> Закрыть</a>
+        <a href="#" class="modal-btn create-btn" id="submitGame"><i class="fa-solid fa-check"></i> Создать</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const createBtn = document.getElementById('createGame');
+    const modal = document.getElementById('createModal');
+    const closeBtn = document.getElementById('closeModal');
+    const submitBtn = document.getElementById('submitGame');
+    const gamesList = document.getElementById('gamesList');
+
+    // Навигация по разделам (одна страница)
+    const navProfile = document.getElementById('navProfile');
+    const navPlay = document.getElementById('navPlay');
+    const navInfo = document.getElementById('navInfo');
+    const playSection = document.getElementById('play-section');
+
+    navProfile.addEventListener('click',()=>{
+      playSection.innerHTML = `<h1><i class='fa-solid fa-user-astronaut'></i> Профиль</h1><p>Раздел профиля пользователя.</p>`;
+    });
+
+    navPlay.addEventListener('click',()=>{
+      playSection.innerHTML = `<h1>Игровой режим</h1>
+        <a href='#' class='btn' id='searchGame'><i class='fa-solid fa-magnifying-glass'></i> Искать игру</a>
+        <a href='#' class='btn' id='createGame'><i class='fa-solid fa-plus'></i> Создать игру</a>
+        <div class='games-list' id='gamesList'></div>`;
+      rebindGameButtons();
+    });
+
+    navInfo.addEventListener('click',()=>{
+      playSection.innerHTML = `<h1><i class='fa-solid fa-circle-info'></i> Информация</h1><p>CubeGift — лучшая игровая платформа.</p>`;
+    });
+
+    createBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      modal.style.display = 'flex';
+    });
+
+    closeBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      modal.style.display = 'none';
+    });
+
+    submitBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const name = document.getElementById('gameName').value.trim();
+      const players = document.getElementById('players').value;
+      const bet = document.getElementById('bet').value;
+
+      if(name && players && bet !== ""){
+        const card = document.createElement('div');
+        card.className = 'game-card';
+        card.innerHTML = `<h3><i class='fa-solid fa-dice'></i> ${name}</h3>
+                          <p><i class='fa-solid fa-users'></i> Игроков: ${players}</p>
+                          <p><i class='fa-solid fa-coins'></i> Ставка: ${bet}</p>
+                          <div class='lobby-actions'>
+                            <button class='lobby-btn join-btn'><i class='fa-solid fa-door-open'></i> Вступить</button>
+                            <button class='lobby-btn start-btn'><i class='fa-solid fa-play'></i> Начать</button>
+                          </div>`;
+        gamesList.appendChild(card);
+        modal.style.display = 'none';
+        document.getElementById('gameName').value = '';
+        document.getElementById('players').value = '';
+        document.getElementById('bet').value = '';
+      }
+    });
+
+    window.addEventListener('click',(e)=>{
+      if(e.target === modal){modal.style.display='none'}
+    });
+
+    function rebindGameButtons(){
+      document.getElementById('createGame').addEventListener('click',(e)=>{
+        e.preventDefault();
+        modal.style.display='flex';
+      });
+    }
+  </script>
+</body>
+</html>
