@@ -423,7 +423,7 @@
                 <div class="username" id="userName">Загрузка...</div>
                 <div class="user-handle" id="userHandle">@username</div>
                 <div class="balance-container">
-                    <div class="balance">Баланс: 0</div>
+                    <div class="balance" id="balanceDisplay">Баланс: 0 XTR</div>
                     <div class="add-balance">
                         <i class="fa-solid fa-plus"></i>
                     </div>
@@ -500,6 +500,7 @@
         const userAvatar = document.getElementById('userAvatar');
         const userName = document.getElementById('userName');
         const userHandle = document.getElementById('userHandle');
+        const balanceDisplay = document.getElementById('balanceDisplay');
         
         // Навигация
         function showSection(sectionId) {
@@ -587,17 +588,11 @@
             }
         });
         
-        // Обработка кнопки пополнения баланса
+        // Обработка кнопки пополнения баланса (теперь отправляет данные боту для начала доната)
         document.querySelector('.add-balance').addEventListener('click', function() {
-            tg.showPopup({
-                title: "Пополнение баланса",
-                message: "Выберите способ пополнения:",
-                buttons: [
-                    {type: "default", text: "Картой"},
-                    {type: "default", text: "Криптовалютой"},
-                    {type: "cancel"}
-                ]
-            });
+            // Отправляем данные боту для инициации /don
+            tg.sendData(JSON.stringify({action: 'start_donation'}));
+            tg.showAlert('Запрос на пополнение отправлен. Перейдите в чат с ботом для ввода суммы и оплаты через Telegram Stars (XTR). После оплаты обновите Mini App.');
         });
         
         // Загрузка данных пользователя из Telegram
@@ -638,6 +633,9 @@
                 
                 // Отправляем данные на сервер для сохранения
                 sendUserDataToServer(user);
+                
+                // Запрашиваем баланс у бота при загрузке (бот ответит в чат, пользователь увидит)
+                tg.sendData(JSON.stringify({action: 'get_balance'}));
             } else {
                 // Если данные недоступны, показываем тестовые данные
                 userName.textContent = 'Тестовый пользователь';
