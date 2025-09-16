@@ -623,17 +623,50 @@
         
         submitDonationBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            const amount = donationAmountInput.value.trim();
+            const amount = parseInt(donationAmountInput.value.trim());
             
-            if (amount && parseInt(amount) > 0) {
-                // Отправляем команду /don с указанной суммой
-                tg.sendData(JSON.stringify({
-                    action: 'start_donation',
-                    amount: parseInt(amount)
-                }));
-                donationModal.style.display = 'none';
-                donationAmountInput.value = '';
-                tg.showAlert('Запрос на пополнение отправлен. Перейдите в чат с ботом для оплаты через Telegram Stars (XTR). После оплаты обновите Mini App.');
+            if (amount && amount > 0) {
+                // Создаем инвойс для оплаты через Telegram Stars
+                const invoice = {
+                    title: "Пополнение баланса CubeGift",
+                    description: `Пополнение на ${amount} XTR`,
+                    currency: "XTR",
+                    prices: [
+                        {
+                            label: "Пополнение баланса",
+                            amount: amount * 1000000 // Конвертируем в минимальные единицы
+                        }
+                    ],
+                    payload: JSON.stringify({
+                        type: "donation",
+                        amount: amount,
+                        userId: tg.initDataUnsafe.user?.id
+                    }),
+                    provider_token: "" // Для Telegram Stars оставляем пустым
+                };
+                
+                // Открываем платежный интерфейс
+                tg.openInvoice(invoice, (status) => {
+                    if (status === "paid") {
+                        // Успешная оплата
+                        tg.showAlert(`Баланс успешно пополнен на ${amount} XTR!`);
+                        donationModal.style.display = 'none';
+                        donationAmountInput.value = '';
+                        
+                        // Обновляем баланс
+                        updateBalanceDisplay(amount);
+                        
+                        // Отправляем данные на сервер
+                        tg.sendData(JSON.stringify({
+                            action: 'update_balance',
+                            amount: amount
+                        }));
+                    } else if (status === "failed") {
+                        tg.showAlert("Оплата не удалась. Попробуйте снова.");
+                    } else if (status === "cancelled") {
+                        tg.showAlert("Оплата отменена.");
+                    }
+                });
             } else {
                 tg.showPopup({
                     title: "Ошибка",
@@ -642,6 +675,13 @@
                 });
             }
         });
+        
+        // Функция для обновления отображения баланса
+        function updateBalanceDisplay(amount) {
+            const currentBalance = parseInt(balanceDisplay.textContent.match(/\d+/)[0] || 0);
+            const newBalance = currentBalance + amount;
+            balanceDisplay.textContent = `Баланс: ${newBalance} XTR`;
+        }
         
         // Загрузка данных пользователя из Telegram
         function loadUserData() {
@@ -721,6 +761,18 @@
             .catch(error => console.error('Ошибка:', error));
             */
         }
+        
+        // Обработка входящих данных от бота
+        tg.onEvent('webAppDataReceived', (event) => {
+            try {
+                const data = JSON.parse(event);
+                if (data.balance !== undefined) {
+                    balanceDisplay.textContent = `Баланс: ${data.balance} XTR`;
+                }
+            } catch (e) {
+                console.error('Ошибка обработки данных от бота:', e);
+            }
+        });
         
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
