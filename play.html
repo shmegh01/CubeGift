@@ -284,7 +284,7 @@
             margin-top: 10px;
         }
         
-        /* Модальное окно */
+        /* Модальное окно для создания игры */
         .modal {
             position: fixed;
             inset: 0;
@@ -458,6 +458,7 @@
         </button>
     </div>
 
+    <!-- Модальное окно для создания игры -->
     <div class="modal" id="createModal">
         <div class="modal-content">
             <h2><i class="fa-solid fa-gamepad"></i> Создание игры</h2>
@@ -470,6 +471,19 @@
             <div class="modal-actions">
                 <button class="modal-btn close-btn" id="closeModal"><i class="fa-solid fa-xmark"></i> Закрыть</button>
                 <button class="modal-btn create-btn" id="submitGame"><i class="fa-solid fa-check"></i> Создать</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для ввода суммы пополнения -->
+    <div class="modal" id="donationModal">
+        <div class="modal-content">
+            <h2><i class="fa-solid fa-star"></i> Пополнение баланса</h2>
+            <label for="donationAmount">Сумма в XTR</label>
+            <input type="number" id="donationAmount" min="1" placeholder="Введите сумму в XTR" />
+            <div class="modal-actions">
+                <button class="modal-btn close-btn" id="closeDonationModal"><i class="fa-solid fa-xmark"></i> Закрыть</button>
+                <button class="modal-btn create-btn" id="submitDonation"><i class="fa-solid fa-check"></i> Пополнить</button>
             </div>
         </div>
     </div>
@@ -495,6 +509,12 @@
         const closeBtn = document.getElementById('closeModal');
         const submitBtn = document.getElementById('submitGame');
         const gamesList = document.getElementById('gamesList');
+        
+        // Элементы для пополнения
+        const donationModal = document.getElementById('donationModal');
+        const closeDonationBtn = document.getElementById('closeDonationModal');
+        const submitDonationBtn = document.getElementById('submitDonation');
+        const donationAmountInput = document.getElementById('donationAmount');
         
         // Элементы профиля
         const userAvatar = document.getElementById('userAvatar');
@@ -534,7 +554,7 @@
             showSection('info-section');
         });
         
-        // Модальное окно
+        // Модальное окно для создания игры
         createBtn.addEventListener('click', (e) => {
             e.preventDefault();
             modal.style.display = 'flex';
@@ -586,13 +606,41 @@
             if (e.target === modal) {
                 modal.style.display = 'none';
             }
+            if (e.target === donationModal) {
+                donationModal.style.display = 'none';
+            }
         });
         
-        // Обработка кнопки пополнения баланса (теперь отправляет данные боту для начала доната)
+        // Обработка кнопки пополнения баланса
         document.querySelector('.add-balance').addEventListener('click', function() {
-            // Отправляем данные боту для инициации /don
-            tg.sendData(JSON.stringify({action: 'start_donation'}));
-            tg.showAlert('Запрос на пополнение отправлен. Перейдите в чат с ботом для ввода суммы и оплаты через Telegram Stars (XTR). После оплаты обновите Mini App.');
+            donationModal.style.display = 'flex';
+        });
+        
+        closeDonationBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            donationModal.style.display = 'none';
+        });
+        
+        submitDonationBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const amount = donationAmountInput.value.trim();
+            
+            if (amount && parseInt(amount) > 0) {
+                // Отправляем команду /don с указанной суммой
+                tg.sendData(JSON.stringify({
+                    action: 'start_donation',
+                    amount: parseInt(amount)
+                }));
+                donationModal.style.display = 'none';
+                donationAmountInput.value = '';
+                tg.showAlert('Запрос на пополнение отправлен. Перейдите в чат с ботом для оплаты через Telegram Stars (XTR). После оплаты обновите Mini App.');
+            } else {
+                tg.showPopup({
+                    title: "Ошибка",
+                    message: "Введите положительную сумму в XTR",
+                    buttons: [{type: "ok"}]
+                });
+            }
         });
         
         // Загрузка данных пользователя из Telegram
@@ -634,7 +682,7 @@
                 // Отправляем данные на сервер для сохранения
                 sendUserDataToServer(user);
                 
-                // Запрашиваем баланс у бота при загрузке (бот ответит в чат, пользователь увидит)
+                // Запрашиваем баланс у бота при загрузке
                 tg.sendData(JSON.stringify({action: 'get_balance'}));
             } else {
                 // Если данные недоступны, показываем тестовые данные
@@ -649,9 +697,6 @@
             // Здесь должен быть код для отправки данных на ваш сервер
             // Например, с помощью fetch API
             console.log('Данные пользователя для отправки на сервер:', user);
-            
-            // Пример отправки данных:
-            /*
             fetch('https://your-server.com/api/save-user', {
                 method: 'POST',
                 headers: {
@@ -671,7 +716,6 @@
             .then(response => response.json())
             .then(data => console.log('Пользователь сохранен:', data))
             .catch(error => console.error('Ошибка:', error));
-            */
         }
         
         // Инициализация при загрузке
