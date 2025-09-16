@@ -284,7 +284,7 @@
             margin-top: 10px;
         }
         
-        /* Модальное окно для создания игры */
+        /* Модальное окно */
         .modal {
             position: fixed;
             inset: 0;
@@ -697,6 +697,9 @@
             // Здесь должен быть код для отправки данных на ваш сервер
             // Например, с помощью fetch API
             console.log('Данные пользователя для отправки на сервер:', user);
+            
+            // Пример отправки данных:
+            /*
             fetch('https://your-server.com/api/save-user', {
                 method: 'POST',
                 headers: {
@@ -716,6 +719,7 @@
             .then(response => response.json())
             .then(data => console.log('Пользователь сохранен:', data))
             .catch(error => console.error('Ошибка:', error));
+            */
         }
         
         // Инициализация при загрузке
